@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class BookingViewModel : ViewModel() {
@@ -17,7 +18,7 @@ class BookingViewModel : ViewModel() {
         if (dataProvider.isCacheExpired()) {
             // 数据过期后，自动触发刷新机制，获取新的数据替换旧有数据，并返回最新数据
             // Only fetch fresh data if cache is expired
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.IO) {
 //                result.postValue(dataProvider.getBookingData())
                 dataProvider.getBookingData()?.let { result.postValue(it) }
             }

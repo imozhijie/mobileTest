@@ -3,6 +3,8 @@ package com.mzj.mobiletest
 import android.content.Context
 import android.util.Log
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 class BookingDataManager(private val context: Context) : BookingDataProvider {
@@ -30,17 +32,19 @@ class BookingDataManager(private val context: Context) : BookingDataProvider {
     }
 
     override suspend fun getBookingData(): Booking? {
-        if (booking == null || isCacheExpired()) {
-            refreshData()
+        return withContext(Dispatchers.IO) {
+            if (booking == null || isCacheExpired()) {
+                refreshData()
+            }
+            booking
         }
-        return booking
     }
 
     override fun isCacheExpired(): Boolean {
         return System.currentTimeMillis() - lastFetchTime >= cacheTime
     }
 
-    private fun refreshData() {
+    private suspend fun refreshData() {
         fetchFromJson()?.let {
             booking = it
             lastFetchTime = System.currentTimeMillis()
@@ -48,8 +52,8 @@ class BookingDataManager(private val context: Context) : BookingDataProvider {
         }
     }
 
-    private fun fetchFromJson(): Booking? {
-        return try {
+    private suspend fun fetchFromJson(): Booking? = withContext(Dispatchers.IO) {
+        return@withContext try {
             context.assets.open("booking.json").bufferedReader().use { reader ->
                 gson.fromJson(reader, Booking::class.java)
             }
