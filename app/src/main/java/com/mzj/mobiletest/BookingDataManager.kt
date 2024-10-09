@@ -16,14 +16,16 @@ class BookingDataManager(private val context: Context) : BookingDataProvider {
 
     companion object {
         private const val BOOKING_KEY = "BookingJson"
+        private const val LAST_FETCH_TIME_KEY = "LastFetchTime"
     }
 
     init {
-        getBookingCachedData()
+        initBookingCachedData()
     }
 
-    private fun getBookingCachedData() {
+    private fun initBookingCachedData() {
         val json = sharedPreferences.getString(BOOKING_KEY, null)
+        lastFetchTime = sharedPreferences.getLong(LAST_FETCH_TIME_KEY, 0)
         booking = json?.let { gson.fromJson(it, Booking::class.java) }
     }
 
@@ -34,7 +36,7 @@ class BookingDataManager(private val context: Context) : BookingDataProvider {
         return booking
     }
 
-    private fun isCacheExpired(): Boolean {
+    override fun isCacheExpired(): Boolean {
         return System.currentTimeMillis() - lastFetchTime >= cacheTime
     }
 
@@ -60,7 +62,12 @@ class BookingDataManager(private val context: Context) : BookingDataProvider {
     private fun saveCachedData() {
         with(sharedPreferences.edit()) {
             putString(BOOKING_KEY, gson.toJson(booking))
+            putLong(LAST_FETCH_TIME_KEY, lastFetchTime)
             apply()
         }
+    }
+
+    override fun getBookingCachedData(): Booking? {
+        return booking
     }
 }
